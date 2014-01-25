@@ -1,16 +1,8 @@
 
-// The server will keep track of the state of certain objects and use them to provide information to the client.
-
-var GameData = Parse.Object.extend("GameData");
 var Leaderboard = Parse.Object.extend("Leaderboard");
 var User = Parse.User;
 
 var _ = require('underscore');
-
-// GameData didn't actually get implemented, but it is loaded.  A row needs to be created and it's object Id provided here.
-// Use it to store any global game state across users.
-var gameData;
-var gameDataId = '9nJ9vCobly';
 
 // For speed and hack development, the room data is stored in a JSON object.
 var roomData = {
@@ -194,17 +186,13 @@ Parse.Cloud.afterSave(User, function(request) {
 // This will return the title & description of the current room the user is in.
 Parse.Cloud.define('getMain', function(request, response) {
 
-  loadGameData().then(function() {
-    var userRoom = request.user.get('room');
-    var room = roomData[userRoom];
-    if (room) {
-      response.success({'title' : room.title, 'description' : room.description });
-    } else {
-      response.error('Invalid data.')
-    }
-  }, function(error) {
-    response.error(error);
-  });
+  var userRoom = request.user.get('room');
+  var room = roomData[userRoom];
+  if (room) {
+    response.success({'title' : room.title, 'description' : room.description });
+  } else {
+    response.error('Invalid data.');
+  }
 
 });
 
@@ -255,12 +243,4 @@ function saneUserLimits(user) {
   if (user.get('health') > 500) return false;
   if (user.get('score') > 1000) return false;
   return true;
-}
-
-// The idea of GameData is that it would be secured from public access, so the
-//   master key is required to access it.
-var loadGameData = function() {
-  gameData = new GameData();
-  gameData.id = gameDataId;
-  return gameData.fetch({ useMasterKey: true });
 }
